@@ -1,0 +1,40 @@
+documate/
+│
+├── backend/                     # Python backend
+│   ├── app/
+│   │   ├── main.py              # FastAPI/Flask entrypoint
+│   │   ├── routes/
+│   │   │   ├── upload.py        # File upload endpoint
+│   │   │   ├── query.py         # Query / RAG endpoint
+│   │   ├── services/
+│   │   │   ├── pdf_processor.py # Extract text from PDF
+│   │   │   ├── embedding.py     # Calls NVIDIA NeMo/Nim to generate embeddings
+│   │   │   ├── pinecone_client.py  # Handles Pinecone indexing & retrieval
+│   │   ├── models/              # Pydantic models (request/response)
+│   │   │   └── schemas.py
+│   │   ├── utils/
+│   │   │   ├── temp_storage.py  # Helper functions for `/tmp` files
+│   │   │   └── logging.py       # Logging setup
+│   │   └── config.py            # API keys, Pinecone credentials, settings
+│   ├── requirements.txt         # Python dependencies
+│   └── Dockerfile (optional)    # For container deployment
+│
+├── frontend/                    # Frontend hosted on Vercel
+│   ├── public/                  # Static assets (images, favicon)
+│   ├── src/
+│   │   ├── components/          # React components
+│   │   ├── pages/               # Next.js pages or HTML pages
+│   │   │   ├── index.js         # Upload page / main UI
+│   │   │   └── results.js       # Display results
+│   │   ├── services/
+│   │   │   └── api.js           # API calls to backend
+│   ├── package.json
+│   └── next.config.js           # Next.js config (if using Next)
+│
+├── tests/                       # Unit / integration tests
+│   ├── test_upload.py
+│   ├── test_query.py
+│
+├── .gitignore
+├── README.md
+└── requirements.txt             # If using single env for simplicity
