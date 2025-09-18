@@ -28,7 +28,7 @@ export const uploadPDF = async (file: File): Promise<UploadResponse> => {
   formData.append('file', file);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const response = await fetch(`${API_BASE_URL}/upload/`, {
       method: 'POST',
       body: formData,
     });
@@ -46,7 +46,7 @@ export const uploadPDF = async (file: File): Promise<UploadResponse> => {
 
 export const queryPDF = async (pdfId: string, query: string): Promise<QueryResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/query`, {
+    const response = await fetch(`${API_BASE_URL}/query/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
