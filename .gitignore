@@ -4,3 +4,8 @@ backend/.env
 tests
 notebook
 .env
+logs
+data
+__pycache__
+*.pyc
+*.pyo

@@ -21,11 +21,7 @@ class GeneratorService:
 
         final_prompt = prompt.final_prompt
 
-        final_prompt.format({
-            'context': context,
-            'query': query
-        })
-
+        final_prompt = final_prompt.format(context=context, query=query)    
         response = self.model.invoke(final_prompt).content
 
         return response

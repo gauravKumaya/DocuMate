@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Menu, Plus, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { queryPDF, uploadPDF } from "@/services/api";
 
 interface Message {
   id: string;
@@ -16,35 +17,63 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  fileId: string;
+  messages: Message[];
+}
+
+interface PDFFile {
+  id: string; // This is the pdf_id from backend
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: string;
+}
+
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hello! I'm DocuMate, your AI assistant. I'm ready to help you analyze and understand your PDF documents. Ask me anything about the uploaded files!",
-      role: "assistant",
-      timestamp: new Date(),
-    },
-  ]);
+  
+  // Store chat sessions for each PDF using pdf_id as key
+  const [chatSessions, setChatSessions] = useState<Map<string, Message[]>>(new Map());
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<PDFFile[]>([]);
   const [activeFile, setActiveFile] = useState<number | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Helper to get current file's messages
+  const getCurrentMessages = (): Message[] => {
+    if (activeFile === null || !uploadedFiles[activeFile]) return [];
+    const fileId = uploadedFiles[activeFile].id; // Use pdf_id instead of name
+    return chatSessions.get(fileId) || [];
+  };
 
   useEffect(() => {
     // Load files from sessionStorage
     const storedFiles = sessionStorage.getItem("uploadedFiles");
     if (storedFiles) {
-      const fileData = JSON.parse(storedFiles);
-      // Convert back to File objects (simplified - in real app would handle differently)
-      const files = fileData.map((f: any) => new File([], f.name, { type: f.type }));
-      setUploadedFiles(files);
-      if (files.length > 0) {
+      const fileData: PDFFile[] = JSON.parse(storedFiles);
+      setUploadedFiles(fileData);
+      if (fileData.length > 0) {
         setActiveFile(0);
+        // Initialize first file's chat session
+        const fileId = fileData[0].id;
+        const fileName = fileData[0].name;
+        setChatSessions((prev) => {
+          const newSessions = new Map(prev);
+          if (!newSessions.has(fileId)) {
+            newSessions.set(fileId, [{
+              id: `welcome-${fileId}`,
+              content: `Hello! I'm ready to help you analyze "${fileName}". Ask me anything about this specific PDF document!`,
+              role: "assistant" as const,
+              timestamp: new Date(),
+            }]);
+          }
+          return newSessions;
+        });
       }
       sessionStorage.removeItem("uploadedFiles");
     }
@@ -58,11 +87,12 @@ const Chat = () => {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [chatSessions, activeFile]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
-
+    if (!inputValue.trim() || isLoading || activeFile === null) return;
+    
+    const pdfId = uploadedFiles[activeFile].id;
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
@@ -70,21 +100,43 @@ const Chat = () => {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Add message to current file's chat session
+    setChatSessions((prev) => {
+      const newSessions = new Map(prev);
+      const currentMessages = newSessions.get(pdfId) || [];
+      newSessions.set(pdfId, [...currentMessages, userMessage]);
+      return newSessions;
+    });
+    
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the backend API with the pdf_id
+      const response = await queryPDF(pdfId, userMessage.content);
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I've analyzed your question about "${inputValue}". Based on the PDF content, here's what I found...\n\nThis is a simulated response. In a real implementation, I would process your PDFs and provide relevant information from the documents.`,
+        content: response.answer,
         role: "assistant",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMessage]);
+      
+      setChatSessions((prev) => {
+        const newSessions = new Map(prev);
+        const currentMessages = newSessions.get(pdfId) || [];
+        newSessions.set(pdfId, [...currentMessages, aiMessage]);
+        return newSessions;
+      });
+    } catch (error) {
+      toast({
+        title: "Query Failed",
+        description: error instanceof Error ? error.message : "Failed to get response",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -96,13 +148,39 @@ const Chat = () => {
 
   const handleFileSelect = (index: number) => {
     setActiveFile(index);
+    const pdfId = uploadedFiles[index].id;
+    const fileName = uploadedFiles[index].name;
+    
+    // Initialize chat session for new file if it doesn't exist
+    if (!chatSessions.has(pdfId)) {
+      setChatSessions((prev) => {
+        const newSessions = new Map(prev);
+        newSessions.set(pdfId, [{
+          id: `welcome-${pdfId}`,
+          content: `Hello! I'm ready to help you analyze "${fileName}". Ask me anything about this specific PDF document!`,
+          role: "assistant" as const,
+          timestamp: new Date(),
+        }]);
+        return newSessions;
+      });
+    }
+    
     toast({
       title: "PDF Selected",
-      description: `Now analyzing: ${uploadedFiles[index].name}`,
+      description: `Now analyzing: ${fileName}`,
     });
   };
 
   const handleFileRemove = (index: number) => {
+    const fileToRemove = uploadedFiles[index].id;
+    
+    // Remove the chat session for this file
+    setChatSessions((prev) => {
+      const newSessions = new Map(prev);
+      newSessions.delete(fileToRemove);
+      return newSessions;
+    });
+    
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
     if (activeFile === index) {
       setActiveFile(uploadedFiles.length > 1 ? 0 : null);
@@ -113,16 +191,56 @@ const Chat = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []).filter(
       (file) => file.type === "application/pdf"
     );
+    
     if (files.length > 0) {
-      setUploadedFiles((prev) => [...prev, ...files]);
-      toast({
-        title: "Files Added",
-        description: `Added ${files.length} PDF${files.length > 1 ? "s" : ""}`,
-      });
+      try {
+        // Upload files to backend and get pdf_ids
+        const uploadPromises = files.map(async (file) => {
+          const response = await uploadPDF(file);
+          return {
+            id: response.pdf_id,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString()
+          };
+        });
+
+        const newFiles = await Promise.all(uploadPromises);
+        setUploadedFiles((prev) => [...prev, ...newFiles]);
+        
+        // If no file is active, select the first new file
+        if (activeFile === null) {
+          setActiveFile(uploadedFiles.length);
+          const pdfId = newFiles[0].id;
+          const fileName = newFiles[0].name;
+          setChatSessions((prev) => {
+            const newSessions = new Map(prev);
+            newSessions.set(pdfId, [{
+              id: `welcome-${pdfId}`,
+              content: `Hello! I'm ready to help you analyze "${fileName}". Ask me anything about this specific PDF document!`,
+              role: "assistant" as const,
+              timestamp: new Date(),
+            }]);
+            return newSessions;
+          });
+        }
+        
+        toast({
+          title: "Files Added",
+          description: `Added ${files.length} PDF${files.length > 1 ? "s" : ""}`,
+        });
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: error instanceof Error ? error.message : "Failed to upload PDFs",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -202,11 +320,22 @@ const Chat = () => {
         {/* Messages Area */}
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           <div className="max-w-3xl mx-auto space-y-4">
-            {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
+            {activeFile === null ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-lg font-medium mb-2">No PDF Selected</p>
+                <p className="text-sm">Upload and select a PDF to start chatting</p>
+              </div>
+            ) : getCurrentMessages().length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-sm">Start a conversation about {uploadedFiles[activeFile].name}</p>
+              </div>
+            ) : (
+              getCurrentMessages().map((message) => (
+                <ChatMessage key={message.id} message={message} />
+              ))
+            )}
             
-            {isLoading && (
+            {isLoading && activeFile !== null && (
               <div className="flex gap-3 animate-fade-in">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" />

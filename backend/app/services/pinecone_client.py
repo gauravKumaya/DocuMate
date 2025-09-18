@@ -21,7 +21,7 @@ class PineconeClient:
         if not self.pc.has_index(index_name):
             self.pc.create_index(
                 name=index_name,
-                dimension=768,
+                dimension=config.VECTOR_DIMENSTION,
                 metric='cosine',
                 spec=ServerlessSpec(cloud='aws', region='us-east-1')
             )

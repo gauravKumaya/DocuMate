@@ -12,7 +12,7 @@ class EmbeddingService:
         self.api_key = api_key
 
         self.client = NVIDIAEmbeddings(
-            model=model_name,
+            model=self.model_name,
             truncate='NONE'
         )
 

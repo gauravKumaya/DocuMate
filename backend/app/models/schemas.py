@@ -17,8 +17,8 @@ class QueryResponse(BaseModel):
     pdf_id: str
     query: str
     answer: str
-    sources: List[dict]
-    confidence_score: Optional[float] = None
+    # sources: List[dict]
+    # confidence_score: Optional[float] = None
 
 
 # ---------- Document Info ----------

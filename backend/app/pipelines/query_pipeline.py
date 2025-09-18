@@ -14,9 +14,9 @@ class QueryPipeline():
         Returns top_k matches from Pinecone.
         """
 
-        retrieved_docs = self.pinecone_client.retrieve_context(query=query, pdf_id=pdf_id)
+        retrieved_docs = self.pinecone_client.retrieve_context(text=query, pdf_id=pdf_id)
 
-        context = "\n\n".join(doc['page_content'] for doc in retrieved_docs)
+        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
 
 
         response = self.generator_service.genrate_response(

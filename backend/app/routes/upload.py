@@ -11,7 +11,7 @@ from backend.app.services.pinecone_client import PineconeClient
 
 router = APIRouter()
 
-@router.post("/upload", response_model=DocumentUploadResponse)
+@router.post("/", response_model=DocumentUploadResponse)
 async def upload_file(file: UploadFile = File(...)):
     
     # Validate file type
@@ -30,7 +30,9 @@ async def upload_file(file: UploadFile = File(...)):
     text_chunks = process_pdf(file_path)
 
     pincone_client = PineconeClient()
-    pincone_client.upsert_documents(text_chunks)
+    pincone_client.upsert_documents(text_chunks, pdf_id)
+
+    return DocumentUploadResponse(pdf_id=pdf_id, message="File uploaded and processed successfully")
 
 
 

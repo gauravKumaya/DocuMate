@@ -16,7 +16,7 @@ def load_pdf(file_path: str) -> List[Document]:
 def filter_to_minimal_documents(docs: List[Document]) -> List[Document]:
     '''Removes some of the unwanted metadata'''
 
-    minimal_docs = List[Document]
+    minimal_docs: List[Document] = []
 
     for doc in docs:
         src = doc.metadata.get('source')

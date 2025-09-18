@@ -11,7 +11,8 @@ class Config:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     
     # Pinecone Configuration
-    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "documate-index")
+    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "documate")
+    VECTOR_DIMENSTION = 1024
     
     # File Processing
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -19,7 +20,7 @@ class Config:
     TEMP_DIR = "/tmp"
     
     # Embedding Configuration
-    EMBEDDING_MODEL = "nvidia/nv-embed-v1"
+    EMBEDDING_MODEL = "nvidia/nv-embedqa-e5-v5"
     CHUNK_SIZE = 1000
     CHUNK_OVERLAP = 200
 

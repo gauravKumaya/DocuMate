@@ -18,8 +18,8 @@ async def query_document(request: QueryRequest):
     
     query_pipeline = QueryPipeline()
 
-    query = QueryRequest.query
-    pdf_id = QueryRequest.pdf_id
+    query = request.query
+    pdf_id = request.pdf_id
     response = query_pipeline.run(query=query, pdf_id=pdf_id)
 
     return QueryResponse(

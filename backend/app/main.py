@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(upload.router, prefix="/upload", tags=['upload'])
-app.include_router(query.router, prefix="/query", tags=["Query"])
+app.include_router(query.router, prefix="/query", tags=["query"])
 
 
 # Health check endpoint
