@@ -5,6 +5,8 @@ langchain-google-genai==2.1.10
 langchain-nvidia-ai-endpoints==0.3.18
 langchain-pinecone==0.2.8
 
+from-root
+
 fastapi==0.116.1
 uvicorn
 python-multipart
