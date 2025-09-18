@@ -12,35 +12,26 @@ router = APIRouter()
 
 pincone_client = PineconeClient()  # Initialize once
 
+from fastapi import BackgroundTasks
+
 @router.post("/", response_model=DocumentUploadResponse)
-async def upload_file(file: UploadFile = File(...)):
-    # Validate file type
+async def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
-    # Create a unique PDF ID
     pdf_id = str(uuid.uuid4())
-
-    # Save to temp storage safely
     file_path = temp_storage.get_pdf_path(pdf_id)
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
-    finally:
-        await file.close()  # Ensure file is closed
 
-    # Process PDF
-    try:
-        text_chunks = process_pdf(file_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-    # Upsert documents to Pinecone
-    try:
-        pincone_client.upsert_documents(text_chunks, pdf_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save to Pinecone: {str(e)}")
+    # Schedule background processing
+    background_tasks.add_task(process_and_upsert, file_path, pdf_id)
 
-    return DocumentUploadResponse(pdf_id=pdf_id, message="File uploaded and processed successfully")
+    return DocumentUploadResponse(pdf_id=pdf_id, message="File uploaded, processing in background")
+
+
+def process_and_upsert(file_path: str, pdf_id: str):
+    text_chunks = process_pdf(file_path)
+    pincone_client = PineconeClient()
+    pincone_client.upsert_documents(text_chunks, pdf_id)
