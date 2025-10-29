@@ -2,7 +2,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from typing import List
-from backend.app.config import config
+from app.config import config
 # from backend.app.utils.logging import logger
 
 def load_pdf(file_path: str) -> List[Document]:

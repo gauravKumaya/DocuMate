@@ -1,12 +1,12 @@
 from pinecone import Pinecone, ServerlessSpec
-from backend.app.config import config
+from app.config import config
 
 from langchain.schema import Document
 from typing import List
 
 from langchain_pinecone import PineconeVectorStore
 
-from backend.app.services.embedding import EmbeddingService
+from app.services.embedding import EmbeddingService
 
 class PineconeClient:
     def __init__(self, index_name: str = config.PINECONE_INDEX_NAME, api_key: str = config.PINECONE_API_KEY):

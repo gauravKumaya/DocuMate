@@ -3,11 +3,11 @@ import shutil
 import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
-from backend.app.models.schemas import DocumentUploadResponse
-from backend.app.utils import temp_storage
+from app.models.schemas import DocumentUploadResponse
+from app.utils import temp_storage
 
-from backend.app.services.pdf_processor import process_pdf
-from backend.app.services.pinecone_client import PineconeClient 
+from app.services.pdf_processor import process_pdf
+from app.services.pinecone_client import PineconeClient 
 
 router = APIRouter()
 

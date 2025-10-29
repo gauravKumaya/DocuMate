@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from backend.app.models.schemas import QueryRequest, QueryResponse
-from backend.app.pipelines.query_pipeline import QueryPipeline
+from app.models.schemas import QueryRequest, QueryResponse
+from app.pipelines.query_pipeline import QueryPipeline
 
 
 router = APIRouter()

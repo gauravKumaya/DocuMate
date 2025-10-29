@@ -2,9 +2,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain\
 
-from backend.app.config import config
+from app.config import config
 
-from backend.app.services import prompt
+from app.services import prompt
 
 config.GENERATOR_MODEL
 

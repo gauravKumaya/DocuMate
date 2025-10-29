@@ -1,6 +1,6 @@
-from backend.app.services.pinecone_client import PineconeClient
-from backend.app.services.generator import GeneratorService
-from backend.app.services import prompt
+from app.services.pinecone_client import PineconeClient
+from app.services.generator import GeneratorService
+from app.services import prompt
 
 class QueryPipeline():
     def __init__(self):

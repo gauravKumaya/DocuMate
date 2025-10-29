@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.routes import upload, query
+from app.routes import upload, query
 
 app = FastAPI(
     title='DocuMate',

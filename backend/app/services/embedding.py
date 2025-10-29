@@ -1,5 +1,5 @@
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
-from backend.app.config import config
+from app.config import config
 
 
 class EmbeddingService:
