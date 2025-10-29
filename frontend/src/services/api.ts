@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://documate-production-9acb.up.railway.app'; // Update this with your actual backend URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface UploadResponse {
   pdf_id: string;
